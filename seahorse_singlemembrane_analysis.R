@@ -6,6 +6,7 @@ library(readxl)
 library(dplyr) 
 library(tidyr) #na wider table
 library(stringr) # extract file date part
+library(ggplot2)
 
 setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
@@ -19,6 +20,8 @@ file_list <- list.files(pattern = "\\.xlsx$", full.names = TRUE)
 # Initialize an empty data frame to store the combined data
 combined_data <- data.frame()
 
+
+# in following alternatively put "Normalized Rate" OR "Rate"
 
 for (file in file_list) {
   current_data <- read_excel(file, sheet = "Normalized Rate")
@@ -90,6 +93,8 @@ rm(combined_data, filtered_combined_data, filtered_data, unselected_list, fileda
 
 
 
+# Calculating subtracked OCR and ECAR ---------------
+
 # Define the groups based on Measurement
 filtered <- filtered %>%
   mutate(injection = case_when(
@@ -116,17 +121,239 @@ filtered.means_wide <- filtered.means %>%
 
 
 rm(filtered.means) # uz netreba, budu pouzivat bud jen filtered nebo wide
-
+# do calculations
 filtered.means_wide <- filtered.means_wide %>%
   mutate(
     calc.basal.OCR = Mean_OCR_basal - Mean_OCR_post2Rot_AA,
     calc.leak.OCR = Mean_OCR_postOM - Mean_OCR_post2Rot_AA,
-    post_OM.ECAR = Mean_ECAR_postOM - Mean_ECAR_basal,
-    post_OM.ECAR.perc = Mean_ECAR_postOM / Mean_ECAR_basal
+    calc.post_OM.ECAR = Mean_ECAR_postOM - Mean_ECAR_basal,
+    calc.post_OM.ECAR.perc = Mean_ECAR_postOM / Mean_ECAR_basal,
+    calc.OCR_to_ecar = Mean_OCR_basal / Mean_ECAR_basal
   )
 
+# and make category for averaging repetitions experiment-wise treatment-wise
+filtered.means_wide <- transform(filtered.means_wide,
+                           Group_exp = paste(Group, filedate, sep = "_"))
 
 
+# now filtered is original for timelapse plotting and wide is for stats
+
+# plot replicate-wise--------------------
 
 
+ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.basal.OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  #scale_colour_manual(values = mypalette) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal OCR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+  #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "control", size=2, vjust=1)
 
+ggsave("bocr.svg", plot = last_plot(),
+       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.leak.OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Proton leak") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(-1, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("leakocr.svg", plot = last_plot(),
+       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(filtered.means_wide, aes(x=Group_exp, y=Mean_ECAR_basal)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal ECAR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("becar.svg", plot = last_plot(),
+       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.post_OM.ECAR.perc)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("post-OM ECAR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+      labels = scales::percent_format(scale = 100),
+    limits = c(NA, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("OMecar.svg", plot = last_plot(),
+       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.OCR_to_ecar)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("OCR/ECAR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #labels = scales::percent_format(scale = 100),
+    limits = c(NA, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("ocrtoecar.svg", plot = last_plot(),
+       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+# plot average (paper) -------------
+# average individual experiments (1 nr per biol replicate)
+
+average_data <- filtered.means_wide %>%
+  group_by(Group, Group_exp) %>%
+  summarize(
+    avg_calc_basal_OCR = mean(calc.basal.OCR),
+    avg_calc_leak_OCR = mean(calc.leak.OCR),
+    avg_basal_ECAR = mean(Mean_ECAR_basal),
+    avg_post_OM_ECAR = mean(calc.post_OM.ECAR),
+    avg_ratio_ECAR = mean(calc.post_OM.ECAR.perc),
+    avg_ratio_OCR_to_ECAR = mean(calc.OCR_to_ecar)
+  )
+
+# prejmenovani duplikatu 95
+average_data <- average_data %>%
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+
+
+ggplot(average_data, aes(x=Group, y=avg_calc_basal_OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal OCR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("bocr_mean.svg", plot = last_plot(),
+       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(average_data, aes(x=Group, y=avg_calc_leak_OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Proton leak") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, 60)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("leakocr_mean.svg", plot = last_plot(),
+       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(average_data, aes(x=Group, y=avg_basal_ECAR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal ECAR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("becar_mean.svg", plot = last_plot(),
+       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(average_data, aes(x=Group, y=avg_ratio_ECAR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("post-OM ECAR ratio") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+      labels = scales::percent_format(scale = 100),
+    limits = c(1, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("OMecar_mean.svg", plot = last_plot(),
+       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+ggplot(average_data, aes(x=Group, y=avg_ratio_OCR_to_ECAR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("OCR to ECAR ratio") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+#    labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("ocrtoecar_mean.svg", plot = last_plot(),
+       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
