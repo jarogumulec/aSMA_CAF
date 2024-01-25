@@ -357,3 +357,78 @@ stat_compare_means(aes(label = ..p.signif..),
 
 ggsave("ocrtoecar_mean.svg", plot = last_plot(),
        width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+# time curves for ECAR and OCR --------
+
+#this is an analogue for output from Wave/ from excel, but here its integrated
+
+#vytvori group date identifikátor
+filtered <- transform(filtered, Group_exp = paste(Group, filedate, sep = "_"))
+
+summary_data <- filtered %>%
+  group_by(Group_exp, Group, Measurement, filedate) %>%
+  summarise(
+    Mean_OCR = mean(OCR),
+    SD_OCR = sd(OCR)
+  )
+
+# Create the line chart with whiskers
+# rovnice prepocitava z cisla measurement 
+ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group = Group_exp, color = filedate)) +
+  geom_line() +
+    geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(Group))) +
+  geom_errorbar(aes(ymin = Mean_OCR - SD_OCR, ymax = Mean_OCR + SD_OCR), width = 5, position = position_dodge(width = 1)) +
+  theme_bw() +
+  labs(x = "Time (min)", y = "Mean OCR") +
+  theme(
+    axis.text.x = element_text(color = "black", size = 6.3),
+    axis.text.y = element_text(color = "black", size = 6.3),
+    axis.title = element_text(size = 8),
+    legend.position = "top",
+    legend.text = element_text(size = 6.3)
+  ) +
+  scale_y_continuous(limits = c(0, NA))
+
+ggsave("ocr_time1.svg", plot = last_plot(),
+       width = 6, height = 6, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+# graf prumeru podle replik
+
+
+# prejmenovani duplikatu 95
+filtered.95 <- filtered %>%
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+
+
+#prumer podle Group a ne experimentu jak driv
+summary_data <- filtered.95 %>%
+  group_by(Group, Measurement) %>%
+  summarise(
+    Mean_OCR = mean(OCR),
+    SD_OCR = sd(OCR)
+  )
+
+
+# rovnice prepocitava z cisla measurement 
+ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group = Group, color = Group)) +
+  geom_line() +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(Group))) +
+  geom_errorbar(aes(ymin = Mean_OCR - SD_OCR, ymax = Mean_OCR + SD_OCR), width = 5, position = position_dodge(width = 1)) +
+  theme_bw() +
+  labs(x = "Time (min)", y = "Mean OCR") +
+  theme(
+    axis.text.x = element_text(color = "black", size = 6.3),
+    axis.text.y = element_text(color = "black", size = 6.3),
+    axis.title = element_text(size = 8),
+    legend.position = "top",
+    legend.text = element_text(size = 6.3)
+  ) +
+  scale_y_continuous(limits = c(0, NA))
+
+ggsave("ocr_time2.svg", plot = last_plot(),
+       width = 6, height = 6, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
