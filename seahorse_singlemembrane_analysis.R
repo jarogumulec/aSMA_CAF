@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr) #na wider table
 library(stringr) # extract file date part
 library(ggplot2)
+library(ggpubr)
 
 setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
@@ -45,7 +46,21 @@ combined_data <- transform(combined_data,
                            Well = paste(filedate, Well, sep = "_"))
 
 
-# filtering in combined data set based on unselected list ---------
+
+
+# Filtration 1: whole plates ----------------
+#new 2024-05-15
+# here i filter whole plate if error
+
+#define dates to filter
+filter_dates <- c(20230704)
+
+combined_data <- combined_data %>%
+  filter(!filedate %in% filter_dates)
+
+
+
+# Filtration 2: specific wells based on unselected list ---------
 
 # tohle se zatim musi definovat manualne
 unselected_list <- list(
@@ -80,14 +95,32 @@ for (filedate in unique_filedate) {
   filtered_combined_data <- rbind(filtered_combined_data, filtered_data)
 }
 
+
+
+
 # rename  filtered_combined_data to simply filtered and rm all dat unnecesarry shit
 filtered <- filtered_combined_data
+
+
+# add group set which shows both date and treatment
+filtered <- transform(filtered, Group_exp = paste(Group, filedate, sep = "_"))
+
+
 rm(combined_data, filtered_combined_data, filtered_data, unselected_list, filedate, unique_filedate, unique_well_orig, unselected)
 
 
-## Filtration 2 second filtration of outliers defined ex-post -------------------------
+
+
+## Filtration 3: outliers defined ex-post -------------------------
 
 # use with care, i explicitly defined what to exclude because of outliers!
+
+
+## backuphelper
+#filtered_bckp_pre2ndfilter <- filtered
+#filtered <- filtered_bckp_pre2ndfilter
+
+
 filtered <- filtered[!(filtered$Group_exp %in% 
                          c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
 
@@ -185,19 +218,6 @@ ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.basal.OCR)) +
 
 ggsave("bocr.svg", plot = last_plot(),
        width = 8, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
-
-
-
-
-
-
-
-
-# filtering redone on wide datasetx 2024-05-06 --
-# nevim proc nefunguje uz to puvodni....
-
-filtered.means_wide <- filtered.means_wide[!(filtered.means_wide$Group_exp %in% 
-                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
 
 
 
@@ -313,6 +333,129 @@ ggsave("atplinkedocr.svg", plot = last_plot(),
 
 
 
+# plot stats from wide table (paper, var 2) -----------
+
+
+# prejmenovani duplikatu 95
+filtered.means_wide_forstatistics <- filtered.means_wide %>%
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+
+
+ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.basal.OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal OCR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+
+ggsave("bocr_grouped.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+
+
+ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_to_ecar)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("OCR to ECAR ratio") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #    labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+
+ggsave("ocrtoecar_grouped.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_ATP_linked)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("OCR ATP-linked") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+
+ggsave("ocr_atplinked_grouped.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.leak.OCR)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Proton leak") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(-1, 30)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+
+ggsave("leakocr_grouped.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=Mean_ECAR_basal)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("Basal ECAR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+
+ggsave("becar_grouped.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
 
 
 
@@ -336,6 +479,11 @@ average_data <- average_data %>%
   mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
 
 
+
+
+
+##
+
 ggplot(average_data, aes(x=Group, y=avg_calc_basal_OCR)) +
   geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
   geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
@@ -348,10 +496,14 @@ ggplot(average_data, aes(x=Group, y=avg_calc_basal_OCR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
     #  labels = scales::percent_format(scale = 100),
-    limits = c(0, NA)) #+
-stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
-
+    limits = c(0, NA)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
+  
+  
+  
+   
 ggsave("bocr_mean.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
@@ -371,9 +523,10 @@ ggplot(average_data, aes(x=Group, y=avg_calc.OCR_ATP_linked)) +
   theme(legend.position = "none") +
   scale_y_continuous(
     #  labels = scales::percent_format(scale = 100),
-    limits = c(0, NA)) #+
+    limits = c(0, NA)) +
 stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
+                   method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                   method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocr_atplinked.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
@@ -394,9 +547,10 @@ ggplot(average_data, aes(x=Group, y=avg_calc_leak_OCR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
     #  labels = scales::percent_format(scale = 100),
-    limits = c(0, 60)) #+
-stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
+    limits = c(0, 30)) +
+  stat_compare_means(aes(label = ..p.signif..),
+                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method.args = list(p.adjust.method = "BH"))
 
 ggsave("leakocr_mean.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
@@ -414,9 +568,10 @@ ggplot(average_data, aes(x=Group, y=avg_basal_ECAR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
     #  labels = scales::percent_format(scale = 100),
-    limits = c(0, NA)) #+
+    limits = c(0, NA)) +
 stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
+                   method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                   method.args = list(p.adjust.method = "BH"))
 
 ggsave("becar_mean.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
@@ -434,9 +589,10 @@ ggplot(average_data, aes(x=Group, y=avg_ratio_ECAR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
       labels = scales::percent_format(scale = 100),
-    limits = c(0.1, NA)) #+
+    limits = c(0.1, NA)) +
 stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
+                   method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                   method.args = list(p.adjust.method = "BH"))
 
 ggsave("OMecar_mean.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
@@ -453,9 +609,10 @@ ggplot(average_data, aes(x=Group, y=avg_ratio_OCR_to_ECAR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
 #    labels = scales::percent_format(scale = 100),
-    limits = c(0, NA)) #+
+    limits = c(0, NA)) +
 stat_compare_means(aes(label = ..p.signif..),
-                   method = "t.test", ref.group = "control", size=2, vjust=1)
+                   method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                   method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocrtoecar_mean.svg", plot = last_plot(),
        width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
