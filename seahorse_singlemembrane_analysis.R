@@ -10,6 +10,8 @@ library(ggplot2)
 
 setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
+# nove
+setwd("C:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
 
 #load all in folder ---------------
@@ -49,7 +51,9 @@ combined_data <- transform(combined_data,
 unselected_list <- list(
   "20230620" = c("A02", "A06", "B04", "C02", "C05"),
   "20230627" = c("A02", "A06", "B06", "C05", "D03"),
-  "20230801" = c("A06", "B02", "B04", "C03")
+  "20230801" = c("A06", "B02", "B04", "C03"),
+  "20240426" = c("A02", "A06"),
+  "20240429" = c("A02", "A05", "B03", "C04", "C05", "C06")
 )
 
 # nevim proc ale nejak to tu bylo treva
@@ -79,6 +83,15 @@ for (filedate in unique_filedate) {
 # rename  filtered_combined_data to simply filtered and rm all dat unnecesarry shit
 filtered <- filtered_combined_data
 rm(combined_data, filtered_combined_data, filtered_data, unselected_list, filedate, unique_filedate, unique_well_orig, unselected)
+
+
+## Filtration 2 second filtration of outliers defined ex-post -------------------------
+
+# use with care, i explicitly defined what to exclude because of outliers!
+filtered <- filtered[!(filtered$Group_exp %in% 
+                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
+
+
 
 
 
@@ -138,6 +151,18 @@ filtered.means_wide <- transform(filtered.means_wide,
 
 # now filtered is original for timelapse plotting and wide is for stats
 
+
+
+# dopoc ATP-linked -----------------
+#2024-04
+# jeste vypocita ATP-linked po odecteni leaku protoze leak je vysoky
+filtered.means_wide <- filtered.means_wide %>%
+  mutate(
+    calc.OCR_ATP_linked = calc.basal.OCR - calc.leak.OCR
+  )
+
+
+
 # plot replicate-wise--------------------
 
 
@@ -159,7 +184,23 @@ ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.basal.OCR)) +
                      method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("bocr.svg", plot = last_plot(),
-       width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 8, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+
+
+
+# filtering redone on wide datasetx 2024-05-06 --
+# nevim proc nefunguje uz to puvodni....
+
+filtered.means_wide <- filtered.means_wide[!(filtered.means_wide$Group_exp %in% 
+                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
+
+
+
 
 
 ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.leak.OCR)) +
@@ -241,6 +282,40 @@ ggsave("ocrtoecar.svg", plot = last_plot(),
        width = 5, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
+
+
+
+
+
+ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.OCR_ATP_linked)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  #scale_colour_manual(values = mypalette) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("ATP-linked OCR") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("atplinkedocr.svg", plot = last_plot(),
+       width = 5, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+
+
+
+
+
 # plot average (paper) -------------
 # average individual experiments (1 nr per biol replicate)
 
@@ -252,7 +327,8 @@ average_data <- filtered.means_wide %>%
     avg_basal_ECAR = mean(Mean_ECAR_basal),
     avg_post_OM_ECAR = mean(calc.post_OM.ECAR),
     avg_ratio_ECAR = mean(calc.post_OM.ECAR.perc),
-    avg_ratio_OCR_to_ECAR = mean(calc.OCR_to_ecar)
+    avg_ratio_OCR_to_ECAR = mean(calc.OCR_to_ecar),
+    avg_calc.OCR_ATP_linked = mean(calc.OCR_ATP_linked)
   )
 
 # prejmenovani duplikatu 95
@@ -277,7 +353,33 @@ stat_compare_means(aes(label = ..p.signif..),
                    method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("bocr_mean.svg", plot = last_plot(),
-       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
+
+
+ggplot(average_data, aes(x=Group, y=avg_calc.OCR_ATP_linked)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + # , aes(colour = factor(treatments))
+  theme_bw() +
+  theme(axis.text.x=element_text(color = "black", size=6.3, angle=90, vjust=0.5, hjust=1), # musi byt vjust 0.5 !!
+        axis.text.y=element_text(color = "black", size=6.3),
+        axis.title = element_text(size = 8))  + 
+  xlab(NULL) +
+  ylab("OCR ATP-linked") +
+  theme(legend.position = "none") +
+  scale_y_continuous(
+    #  labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)) #+
+stat_compare_means(aes(label = ..p.signif..),
+                   method = "t.test", ref.group = "control", size=2, vjust=1)
+
+ggsave("ocr_atplinked.svg", plot = last_plot(),
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
 
 
 ggplot(average_data, aes(x=Group, y=avg_calc_leak_OCR)) +
@@ -297,7 +399,7 @@ stat_compare_means(aes(label = ..p.signif..),
                    method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("leakocr_mean.svg", plot = last_plot(),
-       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 ggplot(average_data, aes(x=Group, y=avg_basal_ECAR)) +
@@ -317,7 +419,7 @@ stat_compare_means(aes(label = ..p.signif..),
                    method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("becar_mean.svg", plot = last_plot(),
-       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 ggplot(average_data, aes(x=Group, y=avg_ratio_ECAR)) +
@@ -332,12 +434,12 @@ ggplot(average_data, aes(x=Group, y=avg_ratio_ECAR)) +
   theme(legend.position = "none") +
   scale_y_continuous(
       labels = scales::percent_format(scale = 100),
-    limits = c(1, NA)) #+
+    limits = c(0.1, NA)) #+
 stat_compare_means(aes(label = ..p.signif..),
                    method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("OMecar_mean.svg", plot = last_plot(),
-       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 ggplot(average_data, aes(x=Group, y=avg_ratio_OCR_to_ECAR)) +
   geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
@@ -356,7 +458,7 @@ stat_compare_means(aes(label = ..p.signif..),
                    method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("ocrtoecar_mean.svg", plot = last_plot(),
-       width = 3, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -364,6 +466,9 @@ ggsave("ocrtoecar_mean.svg", plot = last_plot(),
 
 #this is an analogue for output from Wave/ from excel, but here its integrated
 
+
+
+##time - showing replicates-----
 #vytvori group date identifikátor
 filtered <- transform(filtered, Group_exp = paste(Group, filedate, sep = "_"))
 
@@ -376,7 +481,7 @@ summary_data <- filtered %>%
 
 # Create the line chart with whiskers
 # rovnice prepocitava z cisla measurement 
-ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group = Group_exp, color = filedate)) +
+ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group = Group_exp, color = Group)) +
   geom_line() +
     geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(Group))) +
   geom_errorbar(aes(ymin = Mean_OCR - SD_OCR, ymax = Mean_OCR + SD_OCR), width = 5, position = position_dodge(width = 1)) +
@@ -397,7 +502,7 @@ ggsave("ocr_time1.svg", plot = last_plot(),
 
 
 
-# graf prumeru podle replik
+## graf prumeru podle replik-----------
 
 
 # prejmenovani duplikatu 95
@@ -430,5 +535,32 @@ ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group
   ) +
   scale_y_continuous(limits = c(0, NA))
 
+
+
+### testovaci - SE misto SD pro tento graf---------------
 ggsave("ocr_time2.svg", plot = last_plot(),
        width = 6, height = 6, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+# verze se SE misto SD
+summary_data <- filtered.95 %>%
+  group_by(Group, Measurement) %>%
+  summarise(
+    Mean_OCR = mean(OCR),
+    SD_OCR = mean_se(OCR)
+  )
+
+
+ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group = Group, color = Group)) +
+  geom_line() +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(Group))) +
+  geom_errorbar(aes(ymin = SD_OCR$ymin, ymax = SD_OCR$ymax), width = 5, position = position_dodge(width = 1)) +
+  theme_bw() +
+  labs(x = "Time (min)", y = "Mean OCR") +
+  theme(
+    axis.text.x = element_text(color = "black", size = 6.3),
+    axis.text.y = element_text(color = "black", size = 6.3),
+    axis.title = element_text(size = 8),
+    legend.position = "top",
+    legend.text = element_text(size = 6.3)
+  ) +
+  scale_y_continuous(limits = c(0, NA))
