@@ -9,10 +9,13 @@ library(stringr) # extract file date part
 library(ggplot2)
 library(ggpubr)
 
-setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
-# nove
+# data load -----
+
 setwd("C:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
+
+# stary pc
+# setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
 
 #load all in folder ---------------
@@ -68,7 +71,8 @@ unselected_list <- list(
   "20230627" = c("A02", "A06", "B06", "C05", "D03"),
   "20230801" = c("A06", "B02", "B04", "C03"),
   "20240426" = c("A02", "A06"),
-  "20240429" = c("A02", "A05", "B03", "C04", "C05", "C06")
+  "20240429" = c("A02", "A05", "B03", "C04", "C05", "C06"),
+  "20240515" = c("A05")
 )
 
 # nevim proc ale nejak to tu bylo treva
@@ -111,7 +115,7 @@ rm(combined_data, filtered_combined_data, filtered_data, unselected_list, fileda
 
 
 
-## Filtration 3: outliers defined ex-post -------------------------
+# Filtration 3: outliers defined ex-post -------------------------
 
 # use with care, i explicitly defined what to exclude because of outliers!
 
@@ -459,7 +463,7 @@ ggsave("becar_grouped.svg", plot = last_plot(),
 
 
 
-# plot average (paper) -------------
+# plot average (paper, var 1) -------------
 # average individual experiments (1 nr per biol replicate)
 
 average_data <- filtered.means_wide %>%
