@@ -1,5 +1,10 @@
 # Seahorse analyser
 
+# description of project -----
+# data of all experiments located in Experimenty\24-01-23 - Honza aSMA CAF\
+# description located in onenote Granty + Plány \ Honza aSMA CAF
+
+
 #dependencies
 
 library(readxl)
@@ -72,7 +77,10 @@ unselected_list <- list(
   "20230801" = c("A06", "B02", "B04", "C03"),
   "20240426" = c("A02", "A06"),
   "20240429" = c("A02", "A05", "B03", "C04", "C05", "C06"),
-  "20240515" = c("A05")
+  "20240515" = c("A05"),
+  "20240517" = c("C04", "D03"), # C4D3 maji vyssi signal ale vypadaji hezky. 24-10-14 pridano Danca zapomela nahrat
+  "20240629" = c ("B03", "B02"), #  mozna odstran i C02. A04 (pac 154 taky ne uplne pekne) . added 24-10-07 - tim vsechny pro tento experiment
+  "20240717" = c ("C01", "B01") # mozna i neg. k C04, ale je snesitelne.  added 24-10-07 - tim vsechny pro tento experiment
 )
 
 # nevim proc ale nejak to tu bylo treva
@@ -126,7 +134,7 @@ rm(combined_data, filtered_combined_data, filtered_data, unselected_list, fileda
 
 
 filtered <- filtered[!(filtered$Group_exp %in% 
-                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
+                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627", "CAF 105_20240717")), ]
 
 
 
@@ -341,8 +349,15 @@ ggsave("atplinkedocr.svg", plot = last_plot(),
 
 
 # prejmenovani duplikatu 95
+# prejmenovani tech Pac na CAF a drobne korekce jmen
 filtered.means_wide_forstatistics <- filtered.means_wide %>%
-  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117", "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156", "Pac 167" = "CAF 167", "Pac 171" = "CAF 171"))
+
+
+# 20241014 : Co ma byt reference - HGF nebo celkovy prumer?
+
+median(filtered.means_wide_forstatistics$calc.basal.OCR, na.rm = TRUE)
+median(filtered.means_wide_forstatistics$calc.basal.OCR[filtered.means_wide_forstatistics$Group == "HGFb"], na.rm = TRUE)
 
 
 ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.basal.OCR)) +
@@ -464,7 +479,12 @@ ggsave("becar_grouped.svg", plot = last_plot(),
 
 
 # plot average (paper, var 1) -------------
-# average individual experiments (1 nr per biol replicate)
+
+# previous analysis was based on point = well, this averages wells in replicate, 
+# so the point is now 1 biol. replicate - 1 biol well. 
+# thus, as some of the patients were measured just once, the statistics is not 
+# count on them.
+
 
 average_data <- filtered.means_wide %>%
   group_by(Group, Group_exp) %>%
@@ -626,7 +646,7 @@ ggsave("ocrtoecar_mean.svg", plot = last_plot(),
 # time curves for ECAR and OCR --------
 
 #this is an analogue for output from Wave/ from excel, but here its integrated
-
+# first version shows just well-based, which is just mess.
 
 
 ##time - showing replicates-----
@@ -699,6 +719,8 @@ ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group
 
 
 ### testovaci - SE misto SD pro tento graf---------------
+
+# toto asi preferovany zpusob zobrazeni
 ggsave("ocr_time2.svg", plot = last_plot(),
        width = 6, height = 6, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
