@@ -102,6 +102,48 @@ replicate_3_data <- process_replicate(replicate_3)
 #2024 added
 group_2_replicate_1_data <- process_replicate(group_2_replicate_1)
 group_2_replicate_2_data <- process_replicate(group_2_replicate_2)
+group_2_replicate_2_data$treatment <- as.character(group_2_replicate_2_data$treatment)
+
+
+
+# alternative + normalizovat mezi membranami -----
+# pokud nepouzito, preskocit na line # merge replicates to one file 
+
+# 2024-10-14
+# i kdyz prumer na membranu drive zatracen, je to asi to nelepsi co jde udelat aby byly membrany porovnatelne.
+
+normalize_to_one <- function(data, column, treatment_column) {
+  # Calculate the mean within each treatment
+  treatment_means <- tapply(data[[column]], data[[treatment_column]], mean, na.rm = TRUE)
+  
+  # Normalize each value within its treatment group
+  data[[column]] <- mapply(function(value, treatment) {
+    value / treatment_means[treatment]
+  }, data[[column]], data[[treatment_column]])
+  
+  return(data)
+}
+
+
+# Normalize each replicate so that each treatment has an average of 1.0
+replicate_1_data <- normalize_to_one(replicate_1_data, "normalised.expression.avg", "treatment")
+replicate_2_data <- normalize_to_one(replicate_2_data, "normalised.expression.avg", "treatment")
+replicate_3_data <- normalize_to_one(replicate_3_data, "normalised.expression.avg", "treatment")
+group_2_replicate_1_data <- normalize_to_one(group_2_replicate_1_data, "normalised.expression.avg", "treatment")
+group_2_replicate_2_data <- normalize_to_one(group_2_replicate_2_data, "normalised.expression.avg", "treatment")
+group_2_replicate_2_data$treatment <- as.character(group_2_replicate_2_data$treatment)
+
+
+
+aggregate(normalised.expression.avg ~ treatment, data = replicate_1_data, mean)
+aggregate(normalised.expression.avg ~ treatment, data = replicate_2_data, mean)
+aggregate(normalised.expression.avg ~ treatment, data = replicate_3_data, mean)
+aggregate(normalised.expression.avg ~ treatment, data = group_2_replicate_1_data, mean)
+aggregate(normalised.expression.avg ~ treatment, data = group_2_replicate_2_data, mean)
+
+
+
+# merge replicates to one file ---------------
 
 # merge
 # Create an empty data frame to hold the combined data
@@ -178,10 +220,6 @@ unscaled_data <- as.matrix(t(normalised_cytokine_hm))
 
 heatmap.2(unscaled_data, trace="none", density="none",  col=viridis(100), breaks = breaks,#col=bluered(255),
           scale="none",   Colv = F, dendrogram = "row", keysize = 0.9)
-
-heatmap.2(unscaled_data, trace="none", density="none",  col=viridis(100), #col=bluered(255),
-          scale="none",   Colv = F, dendrogram = "row", keysize = 0.9)
-
 
 rm(unscaled_data)
 
