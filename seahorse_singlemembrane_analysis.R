@@ -133,6 +133,7 @@ rm(combined_data, filtered_combined_data, filtered_data, unselected_list, fileda
 #filtered <- filtered_bckp_pre2ndfilter
 
 
+# 20224-10-14 odstranena jeste 105 ktera jedna z 4 byla ustrelena
 filtered <- filtered[!(filtered$Group_exp %in% 
                          c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627", "CAF 105_20240717")), ]
 
