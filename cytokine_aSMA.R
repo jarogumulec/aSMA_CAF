@@ -193,6 +193,14 @@ rm(group_2_replicate_2_data, group_2_replicate_1_data, group_2_replicate_2, grou
 normalised_cytokine$heatmap_treatment <- paste(normalised_cytokine$treatment, normalised_cytokine$replicate, sep = "_")
 
 
+# save this table:
+
+# zapise tabulku pro dalsi porovnavani.
+write.csv(normalised_cytokine, "../normalised_cytokine.csv", row.names = FALSE)
+
+
+
+
 normalised_cytokine_hm <- normalised_cytokine[, c("heatmap_treatment", "cytokine", "normalised.expression.avg")]
 
 # Reshape the data for the heatmap
@@ -400,6 +408,7 @@ grouped_data <- normalised_cytokine %>%
 
 
 
+
 # Create the facetted ggplot
 facetted_plot <- ggplot(grouped_data, aes(x = treatment, y = normalised.expression.avg, fill = treatment, color = treatment)) +
   geom_boxplot() +
@@ -412,7 +421,6 @@ facetted_plot <- ggplot(grouped_data, aes(x = treatment, y = normalised.expressi
 
 # Print the facetted plot
 print(facetted_plot)
-
 
 
 

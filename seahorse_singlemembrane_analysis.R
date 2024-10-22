@@ -1,10 +1,5 @@
 # Seahorse analyser
 
-# description of project -----
-# data of all experiments located in Experimenty\24-01-23 - Honza aSMA CAF\
-# description located in onenote Granty + Plány \ Honza aSMA CAF
-
-
 #dependencies
 
 library(readxl)
@@ -14,13 +9,10 @@ library(stringr) # extract file date part
 library(ggplot2)
 library(ggpubr)
 
+setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
-# data load -----
-
+# nove
 setwd("C:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
-
-# stary pc
-# setwd("D:/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/23-08-01 - Seahorse HGF CAF")
 
 
 #load all in folder ---------------
@@ -77,10 +69,7 @@ unselected_list <- list(
   "20230801" = c("A06", "B02", "B04", "C03"),
   "20240426" = c("A02", "A06"),
   "20240429" = c("A02", "A05", "B03", "C04", "C05", "C06"),
-  "20240515" = c("A05"),
-  "20240517" = c("C04", "D03"), # C4D3 maji vyssi signal ale vypadaji hezky. 24-10-14 pridano Danca zapomela nahrat
-  "20240629" = c ("B03", "B02"), #  mozna odstran i C02. A04 (pac 154 taky ne uplne pekne) . added 24-10-07 - tim vsechny pro tento experiment
-  "20240717" = c ("C01", "B01") # mozna i neg. k C04, ale je snesitelne.  added 24-10-07 - tim vsechny pro tento experiment
+  "20240515" = c("A05")
 )
 
 # nevim proc ale nejak to tu bylo treva
@@ -133,9 +122,8 @@ rm(combined_data, filtered_combined_data, filtered_data, unselected_list, fileda
 #filtered <- filtered_bckp_pre2ndfilter
 
 
-# 20224-10-14 odstranena jeste 105 ktera jedna z 4 byla ustrelena
 filtered <- filtered[!(filtered$Group_exp %in% 
-                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627", "CAF 105_20240717")), ]
+                         c("CAF 104_20230627", "CAF 105_20230627", "CAF 89_20230627", "HGFb_20230627")), ]
 
 
 
@@ -230,9 +218,7 @@ ggplot(filtered.means_wide, aes(x=Group_exp, y=calc.basal.OCR)) +
                      method = "t.test", ref.group = "control", size=2, vjust=1)
 
 ggsave("bocr.svg", plot = last_plot(),
-       width = 8, height = 4.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
-
-
+       width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -350,16 +336,17 @@ ggsave("atplinkedocr.svg", plot = last_plot(),
 
 
 # prejmenovani duplikatu 95
-# prejmenovani tech Pac na CAF a drobne korekce jmen
 filtered.means_wide_forstatistics <- filtered.means_wide %>%
-  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117", "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156", "Pac 167" = "CAF 167", "Pac 171" = "CAF 171"))
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 095", "CAF 95-2" = "CAF 095", 
+                        "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117",
+                        "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156",
+                        "Pac 167" = "CAF 167", "Pac 171" = "CAF 171",
+                        "CAF 76" = "CAF 076", "CAF 89" = "CAF 089", "CAF 91" ="CAF 091",
+                        "CAF 97" = "CAF 097"))
 
 
-# 20241014 : Co ma byt reference - HGF nebo celkovy prumer?
-
-median(filtered.means_wide_forstatistics$calc.basal.OCR, na.rm = TRUE)
-median(filtered.means_wide_forstatistics$calc.basal.OCR[filtered.means_wide_forstatistics$Group == "HGFb"], na.rm = TRUE)
-
+# Save the edited chart for correlative stuff
+write.csv(filtered.means_wide_forstatistics, "../Seahorse_complete_calculated.csv", row.names = FALSE)
 
 ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.basal.OCR)) +
   geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(Group))) +
@@ -379,7 +366,7 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.basal.OCR)) +
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("bocr_grouped.svg", plot = last_plot(),
-       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -405,7 +392,7 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_to_ecar)) +
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocrtoecar_grouped.svg", plot = last_plot(),
-       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -429,7 +416,7 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_ATP_linked)) +
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocr_atplinked_grouped.svg", plot = last_plot(),
-       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -453,7 +440,7 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.leak.OCR)) +
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("leakocr_grouped.svg", plot = last_plot(),
-       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=Mean_ECAR_basal)) +
@@ -474,18 +461,13 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=Mean_ECAR_basal)) +
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("becar_grouped.svg", plot = last_plot(),
-       width = 4, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
 
 # plot average (paper, var 1) -------------
-
-# previous analysis was based on point = well, this averages wells in replicate, 
-# so the point is now 1 biol. replicate - 1 biol well. 
-# thus, as some of the patients were measured just once, the statistics is not 
-# count on them.
-
+# average individual experiments (1 nr per biol replicate)
 
 average_data <- filtered.means_wide %>%
   group_by(Group, Group_exp) %>%
@@ -501,7 +483,12 @@ average_data <- filtered.means_wide %>%
 
 # prejmenovani duplikatu 95
 average_data <- average_data %>%
-  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+  mutate(Group = recode(Group, "CAF 95" = "CAF 095", "CAF 95-2" = "CAF 095", 
+                        "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117",
+                        "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156",
+                        "Pac 167" = "CAF 167", "Pac 171" = "CAF 171",
+                        "CAF 76" = "CAF 076", "CAF 89" = "CAF 089", "CAF 91" ="CAF 091",
+                        "CAF 97" = "CAF 097"))
 
 
 
@@ -647,7 +634,7 @@ ggsave("ocrtoecar_mean.svg", plot = last_plot(),
 # time curves for ECAR and OCR --------
 
 #this is an analogue for output from Wave/ from excel, but here its integrated
-# first version shows just well-based, which is just mess.
+
 
 
 ##time - showing replicates-----
@@ -689,7 +676,12 @@ ggsave("ocr_time1.svg", plot = last_plot(),
 
 # prejmenovani duplikatu 95
 filtered.95 <- filtered %>%
-  mutate(Group = recode(Group, "CAF 95-1" = "CAF 95", "CAF 95-2" = "CAF 95", "HGfb" = "HGFb"))
+  mutate(Group = recode(Group, "CAF 95-1" = "CAF 095", "CAF 95-2" = "CAF 095", 
+                        "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117",
+                        "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156",
+                        "Pac 167" = "CAF 167", "Pac 171" = "CAF 171",
+                        "CAF 76" = "CAF 076", "CAF 89" = "CAF 089", "CAF 91" ="CAF 091",
+                        "CAF 97" = "CAF 097"))
 
 
 #prumer podle Group a ne experimentu jak driv
@@ -720,8 +712,6 @@ ggplot(summary_data, aes(x = (8.552 * Measurement - 7.0683), y = Mean_OCR, group
 
 
 ### testovaci - SE misto SD pro tento graf---------------
-
-# toto asi preferovany zpusob zobrazeni
 ggsave("ocr_time2.svg", plot = last_plot(),
        width = 6, height = 6, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
