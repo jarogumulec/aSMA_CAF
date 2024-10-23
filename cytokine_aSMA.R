@@ -279,55 +279,6 @@ rm(scaled_data)
 
 
 
-# statistics on aSMA levels -----------------------
-
-# averaging the replicartees 
-
-# Group by cytokine and treatment, and calculate the average
-normalised_cytokine_avg <- normalised_cytokine %>%
-  group_by(cytokine, treatment) %>%
-  summarize(normalised.expression.avg = mean(normalised.expression.avg))
-
-
-
-#Create a new column based on treatment values
-normalised_cytokine_avg_stat <- normalised_cytokine_avg %>%
-  mutate(aSMA.group = case_when(
-    treatment %in% c(98, 101, 104, 95) ~ "aSMA_high",
-    treatment %in% c(89, 97, 105, "HGFB") ~ "aSMA_low",
-    TRUE ~ "Other"
-  ))
-
-normalised_cytokine_avg_stat <- normalised_cytokine_avg_stat %>%
-  filter(!(cytokine %in% c("BLANK", "Pos", "Neg")))
-
-
-# List of unique cytokines
-unique_cytokines <- unique(normalised_cytokine_avg_stat$cytokine)
-
-# Initialize an empty list to store results
-results_list <- list()
-
-# Loop through unique cytokines and perform t-tests
-for (cytokine in unique_cytokines) {
-  subset_data <- normalised_cytokine_avg_stat[normalised_cytokine_avg_stat$cytokine == cytokine, ]
-  t_test_result <- t.test(normalised.expression.avg ~ aSMA.group, data = subset_data)
-  
-  # Store results in the list
-  results_list[[cytokine]] <- list(
-    Cytokine = cytokine,
-    T_Statistic = t_test_result$statistic,
-    P_Value = t_test_result$p.value
-  )
-}
-
-# Convert the list of results into a data frame
-results_df <- do.call(rbind, results_list)
-
-
-
-
-
 
 # heatmaps averaged replicates -----------------
 
