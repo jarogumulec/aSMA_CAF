@@ -36,10 +36,16 @@ setwd("C:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/
 
 ## approach 2: to HGFB of every membrane -----------
 
-# downside: The 
+# downside: The HGFB will be 1.0 without variability at all. statistic needed would be One sample test
 
+densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx")
 
+# removes empty cases
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised[densitometry_HGFBnormalised$id != "" & !is.na(densitometry_HGFBnormalised$id), ]
+#removes unrelevant columns
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:5, 22:24)]
 
+write.csv(densitometry_HGFBnormalised, "../densitometry_HGFBnormalised.csv", row.names = FALSE)
 #
 
 
