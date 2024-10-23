@@ -5,7 +5,9 @@
 # dependent ----------
 
 library(readxl)
-
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
 
 
 # data load --------------
@@ -43,13 +45,122 @@ densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx")
 # removes empty cases
 densitometry_HGFBnormalised <- densitometry_HGFBnormalised[densitometry_HGFBnormalised$id != "" & !is.na(densitometry_HGFBnormalised$id), ]
 #removes unrelevant columns
-densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:5, 22:24)]
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 22:24)]
+
+
+colnames(densitometry_HGFBnormalised) <- c("id", "run", "replicate", "patient", 
+                        "PDPN.normalised.int.raw.vals", 
+                        "ASMA.normalised.int.raw.vals", 
+                        "TUB.normalised.int.raw.vals")
+
+colnames(densitometry_HGFBnormalised)
+
+# rename patients for consistency
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised %>%
+  mutate(
+    patient = case_when(
+      # Rename 3-digit patients to 'CAF' prefix
+      str_detect(patient, "^\\d{3}$") ~ paste0("CAF ", patient),
+      # Rename 2-digit patients to 'CAF 0XX' format
+      str_detect(patient, "^\\d{2}$") ~ paste0("CAF 0", patient),
+      # Keep HGFB unchanged
+      patient == "HGFB" ~ "hGF",
+      # Default to original value (just in case)
+      TRUE ~ patient
+    )
+  )
 
 write.csv(densitometry_HGFBnormalised, "../densitometry_HGFBnormalised.csv", row.names = FALSE)
 #
 
 
+# plot aSMA--------------------
 
-# # if needed name from id to row name
-# aSMA_PDPN.densitometry <- as.data.frame(aSMA_PDPN.densitometry)
-# rownames(aSMA_PDPN.densitometryf) <- aSMA_PDPN.densitometry$id
+
+## stats to calculate first because of one sample adjujsted test ggpubr cannot do alone
+
+# Step 1: Perform one-sample t-tests manually for each patient group, excluding the constant group (HGFB)
+test_results <- densitometry_HGFBnormalised %>%
+  group_by(patient) %>%
+  summarize(
+    p.val = if(all(ASMA.normalised.int.raw.vals == 1)) 1 else t.test(ASMA.normalised.int.raw.vals, mu = 1)$p.value
+  )
+
+# Step 2: Apply Benjamini-Hochberg (BH) correction (optional step to create p.adj table)
+test_results <- test_results %>%
+  mutate(p.adj = p.adjust(p.val, method = "BH"))
+
+# Step 3: Merge the p-values with the original data for plotting
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised %>%
+  left_join(test_results, by = "patient")
+
+# Step 4: Remove rows with NA values (in case there are any)
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised %>%
+  filter(!is.na(ASMA.normalised.int.raw.vals))
+
+# Step 5: Create a distinct dataset for patient-level p-values
+p_value_data <- test_results %>%
+  filter(!is.na(p.val)) %>%
+  distinct(patient, p.val)
+
+# Step 6: Define a y-limit for the text to be placed slightly above the maximum values in each group
+y_max <- max(densitometry_HGFBnormalised$ASMA.normalised.int.raw.vals, na.rm = TRUE) * 1.1
+
+
+
+# 
+# Step 7: Create the plot
+ggplot(densitometry_HGFBnormalised, aes(x = patient, y = ASMA.normalised.int.raw.vals)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(patient))) +
+  geom_boxplot(outlier.shape = NA, fill = "0", lwd = 0.5) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(color = "black", size = 6.3, angle = 90, vjust = 0.5, hjust = 1),
+    axis.text.y = element_text(color = "black", size = 6.3),
+    axis.title = element_text(size = 8)
+  ) +
+  xlab(NULL) +
+  ylab("aSMA (A.U.)") +
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_y_log10() +
+  # Step 8: Manually annotate with the unadjusted p-values (one per patient)
+  geom_text(data = p_value_data, aes(x = patient, y = y_max, 
+                                     label = ifelse(p.val < 0.05, sprintf("p = %.3f", p.val), "")),
+            vjust = -1, size = 2)
+
+
+ggsave("asma.svg", plot = last_plot(),
+       width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+# Optional: Check the p-value table
+print(test_results)
+
+
+
+
+
+
+
+
+
+
+# bez statistiky
+ggplot(densitometry_HGFBnormalised, aes(x=patient, y=ASMA.normalised.int.raw.vals)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(patient))) +
+  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 6.3, angle = 90, vjust = 0.5, hjust = 1),
+        axis.text.y = element_text(color = "black", size = 6.3),
+        axis.title = element_text(size = 8)) + 
+  xlab(NULL) +
+  ylab("aSMA (A.U.)") +
+  theme(legend.position = "none") 
+
+
+ggsave("bocr.svg", plot = last_plot(),
+       width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+
+
