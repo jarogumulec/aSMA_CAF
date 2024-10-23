@@ -139,28 +139,64 @@ print(test_results)
 
 
 
+# pplot PDPN -----
 
+# Step 1: Perform one-sample t-tests manually for each patient group, excluding the constant group (hGF)
+test_results_PDPN <- densitometry_HGFBnormalised %>%
+  group_by(patient) %>%
+  summarize(
+    p.val = if(all(PDPN.normalised.int.raw.vals == 1)) 1 else t.test(PDPN.normalised.int.raw.vals, mu = 1)$p.value
+  )
 
+# Step 2: Apply Benjamini-Hochberg (BH) correction (optional step to create p.adj table)
+test_results_PDPN <- test_results_PDPN %>%
+  mutate(p.adj = p.adjust(p.val, method = "BH"))
 
+# Step 3: Merge the p-values with the original data for plotting
+densitometry_HGFBnormalised_PDPN <- densitometry_HGFBnormalised %>%
+  left_join(test_results_PDPN, by = "patient")
 
+# Step 4: Remove rows with NA values (in case there are any)
+densitometry_HGFBnormalised_PDPN <- densitometry_HGFBnormalised_PDPN %>%
+  filter(!is.na(PDPN.normalised.int.raw.vals))
 
+# Step 5: Create a distinct dataset for patient-level p-values
+p_value_data_PDPN <- test_results_PDPN %>%
+  filter(!is.na(p.val)) %>%
+  distinct(patient, p.val)
 
+# Step 6: Define a y-limit for the text to be placed slightly above the maximum values in each group
+y_max_PDPN <- max(densitometry_HGFBnormalised_PDPN$PDPN.normalised.int.raw.vals, na.rm = TRUE) * 1.1
 
-# bez statistiky
-ggplot(densitometry_HGFBnormalised, aes(x=patient, y=ASMA.normalised.int.raw.vals)) +
-  geom_point(position = position_jitter(seed = 1, width = 0.3), size=0.05, aes(colour = factor(patient))) +
-  geom_boxplot(outlier.shape = NA, fill="0", lwd = 0.5) + 
+# Step 7: Create the plot for PDPN
+ggplot(densitometry_HGFBnormalised_PDPN, aes(x = patient, y = PDPN.normalised.int.raw.vals)) +
+  geom_point(position = position_jitter(seed = 1, width = 0.3), size = 0.05, aes(colour = factor(patient))) +
+  geom_boxplot(outlier.shape = NA, fill = "0", lwd = 0.5) +
   theme_bw() +
-  theme(axis.text.x = element_text(color = "black", size = 6.3, angle = 90, vjust = 0.5, hjust = 1),
-        axis.text.y = element_text(color = "black", size = 6.3),
-        axis.title = element_text(size = 8)) + 
+  theme(
+    axis.text.x = element_text(color = "black", size = 6.3, angle = 90, vjust = 0.5, hjust = 1),
+    axis.text.y = element_text(color = "black", size = 6.3),
+    axis.title = element_text(size = 8)
+  ) +
   xlab(NULL) +
-  ylab("aSMA (A.U.)") +
-  theme(legend.position = "none") 
+  ylab("PDPN (A.U.)") +
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_y_log10() +
+  # Step 8: Manually annotate with the unadjusted p-values (one per patient)
+  geom_text(data = p_value_data_PDPN, aes(x = patient, y = y_max_PDPN, 
+                                          label = ifelse(p.val < 0.05, sprintf("p = %.3f", p.val), "")),
+            vjust = -1, size = 2)
 
-
-ggsave("bocr.svg", plot = last_plot(),
+# Save the plot as SVG
+ggsave("pdpn.svg", plot = last_plot(),
        width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+
+# Optional: Check the p-value table
+print(test_results_PDPN)
+
+
+
 
 
 
