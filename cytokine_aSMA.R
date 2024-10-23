@@ -14,6 +14,7 @@ library(reshape2)
 library("gplots") # heatmap.2
 library(ggplot2)
 library(multcomp)
+library(ggpubr)
 
 
 #library("heatmap.plus")
@@ -281,6 +282,13 @@ rm(scaled_data)
 
 
 # heatmaps averaged replicates -----------------
+
+
+
+# Group by cytokine and treatment, and calculate the average
+normalised_cytokine_avg <- normalised_cytokine %>%
+  group_by(cytokine, treatment) %>%
+  summarize(normalised.expression.avg = mean(normalised.expression.avg))
 
 #normalised_cytokine_avg_hm <- normalised_cytokine_avg[, c("heatmap_treatment", "cytokine", "normalised.expression.avg")]
 # Reshape the data for the heatmap
