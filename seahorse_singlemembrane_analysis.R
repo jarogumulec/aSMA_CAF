@@ -338,7 +338,8 @@ ggsave("atplinkedocr.svg", plot = last_plot(),
 # prejmenovani duplikatu 95
 filtered.means_wide_forstatistics <- filtered.means_wide %>%
   mutate(Group = recode(Group, "CAF 95-1" = "CAF 095", "CAF 95-2" = "CAF 095", 
-                        "HGfb" = "HGFb", "CAF172" = "CAF 172", "Pac 117" = "CAF 117",
+                        "HGFB" = "hGF", "HGfb" = "hGF", "HGFb" = "hGF",
+                        "CAF172" = "CAF 172", "Pac 117" = "CAF 117",
                         "Pac 122" = "CAF 122", "Pac 140" = "CAF 140", "Pac 156" = "CAF 156",
                         "Pac 167" = "CAF 167", "Pac 171" = "CAF 171",
                         "CAF 76" = "CAF 076", "CAF 89" = "CAF 089", "CAF 91" ="CAF 091",
@@ -362,11 +363,11 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.basal.OCR)) +
     #  labels = scales::percent_format(scale = 100),
     limits = c(0, NA)) +
   stat_compare_means(aes(label = ..p.signif..),
-                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method = "t.test", ref.group = "hGF", size = 2, vjust = 1,
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("bocr_grouped.svg", plot = last_plot(),
-       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -388,11 +389,11 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_to_ecar)) +
     #    labels = scales::percent_format(scale = 100),
     limits = c(0, NA)) +
   stat_compare_means(aes(label = ..p.signif..),
-                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method = "t.test", ref.group = "hGF", size = 2, vjust = 1,
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocrtoecar_grouped.svg", plot = last_plot(),
-       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -412,11 +413,11 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.OCR_ATP_linked)) +
     #  labels = scales::percent_format(scale = 100),
     limits = c(0, NA)) +
   stat_compare_means(aes(label = ..p.signif..),
-                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method = "t.test", ref.group = "hGF", size = 2, vjust = 1,
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("ocr_atplinked_grouped.svg", plot = last_plot(),
-       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
@@ -436,11 +437,11 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=calc.leak.OCR)) +
     #  labels = scales::percent_format(scale = 100),
     limits = c(-1, 30)) +
   stat_compare_means(aes(label = ..p.signif..),
-                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method = "t.test", ref.group = "hGF", size = 2, vjust = 1,
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("leakocr_grouped.svg", plot = last_plot(),
-       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=Mean_ECAR_basal)) +
@@ -457,11 +458,11 @@ ggplot(filtered.means_wide_forstatistics, aes(x=Group, y=Mean_ECAR_basal)) +
     #  labels = scales::percent_format(scale = 100),
     limits = c(0, NA)) +
   stat_compare_means(aes(label = ..p.signif..),
-                     method = "t.test", ref.group = "HGFb", size = 2, vjust = 1,
+                     method = "t.test", ref.group = "hGF", size = 2, vjust = 1,
                      method.args = list(p.adjust.method = "BH"))
 
 ggsave("becar_grouped.svg", plot = last_plot(),
-       width = 5, height = 3, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
