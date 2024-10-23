@@ -131,7 +131,7 @@ ggplot(densitometry_HGFBnormalised, aes(x = patient, y = ASMA.normalised.int.raw
 
 
 ggsave("asma.svg", plot = last_plot(),
-       width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 # Optional: Check the p-value table
@@ -190,7 +190,7 @@ ggplot(densitometry_HGFBnormalised_PDPN, aes(x = patient, y = PDPN.normalised.in
 
 # Save the plot as SVG
 ggsave("pdpn.svg", plot = last_plot(),
-       width = 12, height = 5.27, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
+       width = 7.5, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 # Optional: Check the p-value table
 print(test_results_PDPN)

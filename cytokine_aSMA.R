@@ -193,7 +193,31 @@ rm(group_2_replicate_2_data, group_2_replicate_1_data, group_2_replicate_2, grou
 normalised_cytokine$heatmap_treatment <- paste(normalised_cytokine$treatment, normalised_cytokine$replicate, sep = "_")
 
 
-# save this table:
+# rename for unification with other tables
+
+levels(as.factor(normalised_cytokine$treatment))
+# Rename levels of 'treatment' column in 'normalised_cytokine'
+normalised_cytokine <- normalised_cytokine %>%
+  mutate(
+    treatment = case_when(
+      # Rename 3-digit treatments to 'CAF' prefix
+      str_detect(treatment, "^\\d{3}$") ~ paste0("CAF ", treatment),
+      # Rename 2-digit treatments to 'CAF 0XX' format
+      str_detect(treatment, "^\\d{2}$") ~ paste0("CAF 0", treatment),
+      # Rename '117_low' to 'CAF 117'
+      treatment == "117_low" ~ "CAF 117",
+      # Rename 'HGFB' to 'hGF'
+      treatment == "HGFB" ~ "hGF",
+      # Default to original value (just in case)
+      TRUE ~ treatment
+    )
+  )
+
+# Verify the changes
+print(unique(normalised_cytokine$treatment))
+
+
+
 
 # zapise tabulku pro dalsi porovnavani.
 write.csv(normalised_cytokine, "../normalised_cytokine.csv", row.names = FALSE)
