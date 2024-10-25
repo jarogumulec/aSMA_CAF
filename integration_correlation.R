@@ -39,7 +39,7 @@ cytokine_avg <- cytokine_avg %>%
 ## seahorse -------
 seahorse <- read.csv("Seahorse_complete_calculated.csv")
 # only the needed ones
-seahorse <- seahorse[, c("Group", "calc.basal.OCR", "calc.leak.OCR", "calc.post_OM.ECAR", "calc.post_OM.ECAR.perc", "calc.OCR_to_ecar", "calc.OCR_ATP_linked")]
+seahorse <- seahorse[, c("Group", "calc.basal.OCR", "calc.leak.OCR", "calc.post_OM.ECAR", "Mean_ECAR_basal", "calc.OCR_to_ecar", "calc.OCR_ATP_linked")]
 # average
 seahorse_avg <- seahorse %>%
   group_by(Group) %>%
@@ -49,6 +49,8 @@ seahorse_avg <- seahorse %>%
 seahorse_avg <- seahorse_avg %>%
   rename(patient = Group)
 rm(seahorse)
+colnames(seahorse_avg) <- c("patient", "basal OCR", "leak OCR", "post-OM ECAR",   "basal ECAR", "OCR to ECAR", "ATP-linked  OCR")
+colnames(seahorse_avg) 
 
 ## western ----------
 western <- read.csv("densitometry_HGFBnormalised.csv")
@@ -60,6 +62,7 @@ western_avg <- western %>%
   summarize(across(where(is.numeric), mean, na.rm = TRUE))
 rm(western)
 
+colnames(western_avg) <- c("patient", "PDPN", "ASMA")
 
 
 
@@ -67,7 +70,7 @@ rm(western)
 AFM <- read_excel("23-09-18 - AFM CAF/AFM_caf_2023-2024.xlsx")
 
 
-colnames(AFM)
+
 
 
 # only needed ones
@@ -78,10 +81,11 @@ AFM_avg <- AFM %>%
   summarize(across(where(is.numeric), mean, na.rm = TRUE))
 rm(AFM)
 
-# Rename Group column to patient
-AFM_avg <- AFM_avg %>%
-  rename(Youngmodulus = mean)
+## Rename Group column to patient
+#AFM_avg <- AFM_avg %>%
+#  rename(Youngmodulus = mean)
 
+colnames(AFM_avg) <- c("patient", "Young modulus")
 
 ## merging ---------
 
