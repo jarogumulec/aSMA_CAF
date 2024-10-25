@@ -13,6 +13,8 @@ cytokine <- read.csv("normalised_cytokine.csv")
 seahorse <- read.csv("Seahorse_complete_calculated.csv")
 # western
 western <- read.csv("densitometry_HGFBnormalised.csv")
+# AFM
+AFM <- read_excel("23-09-18 - AFM CAF/AFM_caf_2023-2024.xlsx")
 
 
 
