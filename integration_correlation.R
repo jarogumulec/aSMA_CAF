@@ -121,17 +121,17 @@ numeric_data <- merged_data %>%
 correlation_matrix <- cor(numeric_data, use = "pairwise.complete.obs")
 
 # Plot the heatmap with clustering
+color_palette <- colorRampPalette(c("blue", "white", "red"))(50)
+
+# Plot the heatmap with the centered color scale at 0
 pheatmap(correlation_matrix,
          clustering_distance_rows = "euclidean",
          clustering_distance_cols = "euclidean",
          clustering_method = "complete",
-         color = colorRampPalette(c("blue", "white", "red"))(50),
+         color = color_palette,
+         breaks = seq(-1, 1, length.out = 51),  # Ensures that 0 is centered in the color scale
          main = "Clustered Correlation Matrix",
          fontsize_row = 6,
          fontsize_col = 6)
-
-ggsave("corr.svg", plot = last_plot(),
-       width = 9, height = 9, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
-
 
 
