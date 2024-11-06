@@ -6,6 +6,10 @@ library(dplyr)
 library(stringr)
 library(reshape2)
 library(ggplot2)
+library(purrr) 
+library(pheatmap)
+library(Hmisc) # stat p vals for ccorr
+library(grid) # hvezdicky do korelacni matice
 
 # nacteni vsech dat co byly udelany -------------
 
@@ -67,7 +71,9 @@ colnames(western_avg) <- c("patient", "PDPN", "ASMA")
 
 
 ## AFM -------
-AFM <- read_excel("23-09-18 - AFM CAF/AFM_caf_2023-2024.xlsx")
+
+AFM <- read.csv("23-09-18 - AFM CAF/AFM_filtered.csv") # 156BR2 filtered out. done in AFM.R
+#AFM <- read_excel("23-09-18 - AFM CAF/AFM_caf_2023-2024.xlsx") # this would load unfiltered dataset
 
 
 
@@ -133,5 +139,51 @@ pheatmap(correlation_matrix,
          main = "Clustered Correlation Matrix",
          fontsize_row = 6,
          fontsize_col = 6)
+
+
+
+
+# corr matrix signif only spravny clustering -------
+
+#todo
+
+
+
+
+
+
+
+
+# correl matrix signif only -------------
+# blby ze clustruje jinak ale je to prehledny 
+# nesignifikantni to totiz udela jako r=0, coz ovlivni clustering
+
+# Step 1: Calculate correlation matrix with p-values
+cor_results <- Hmisc::rcorr(as.matrix(numeric_data))  # Gives both correlation and p-values
+correlation_matrix <- cor_results$r
+p_value_matrix <- cor_results$P
+
+# Step 2: Set non-significant correlations (e.g., p > 0.05) to NA
+significance_level <- 0.05
+correlation_matrix[p_value_matrix > significance_level] <- NA
+
+# Step 3: Plot the heatmap with only significant correlations
+color_palette <- colorRampPalette(c("blue", "white", "red"))(50)
+
+# Replace NA values with 0 for clustering
+correlation_matrix_clust <- correlation_matrix
+correlation_matrix_clust[is.na(correlation_matrix_clust)] <- 0
+
+pheatmap(correlation_matrix_clust,
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         color = color_palette,
+         breaks = seq(-1, 1, length.out = 51),
+         main = "Significant Correlations Only",
+         fontsize_row = 6,
+         fontsize_col = 6,
+         na_col = "grey")  # Color for non-significant correlations
+
 
 
