@@ -2,15 +2,14 @@
 
 library(readxl)
 library(tidyr)
-library(dplyr)
+library(purrr) 
 library(stringr)
 library(reshape2)
 library(ggplot2)
-library(purrr) 
 library(pheatmap)
 library(Hmisc) # stat p vals for ccorr
 library(grid) # hvezdicky do korelacni matice
-
+library(dplyr)  #this is last because summarise woud be masked grom Hmisc
 # nacteni vsech dat co byly udelany -------------
 
 setwd("c:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF")
@@ -94,6 +93,9 @@ rm(AFM)
 colnames(AFM_avg) <- c("patient", "Young modulus")
 
 ## merging ---------
+
+
+
 
 
 tables_to_merge <- list(AFM_avg, cytokine_avg, seahorse_avg, western_avg)
@@ -217,6 +219,33 @@ pheatmap(correlation_matrix,
          fontsize_col = 6)
 
 
+## V4 just 1 half of corrmatrix + * -----------
+
+library(corrplot)
+
+# Define the significance level
+alpha <- 0.01
+
+# Plot with hierarchical clustering, showing all correlations but only marking significant ones with an asterisk
+corrplot(correlation_matrix, 
+         method = "color", 
+         type = "lower",                # Display only the upper triangle
+         order = "hclust",              # Perform hierarchical clustering
+         hclust.method = "complete",    # Specify the clustering method
+         p.mat = p_matrix,              # Pass in the p-value matrix
+         sig.level = alpha,             # Set significance level
+         insig = "label_sig",           # Mark significant correlations with an asterisk
+         pch = "*",                     # Use asterisk symbol
+         pch.cex = 1.2,                 # Adjust size of asterisk
+         pch.col = "black",             # Asterisk color
+         addCoef.col = NULL,            # Remove correlation coefficient text
+         col = colorRampPalette(c("blue", "white", "red"))(200),  # Color scale centered at 0
+         tl.col = "black",              # Text label color
+         tl.srt = 45)                   # Rotate text labels for readability
+
+
+
+
 
 
 ## v4 signif only wrng clustering  -------------
@@ -249,6 +278,8 @@ pheatmap(correlation_matrix_clust,
          fontsize_row = 6,
          fontsize_col = 6,
          na_col = "grey")  # Color for non-significant correlations
+
+
 
 
 
