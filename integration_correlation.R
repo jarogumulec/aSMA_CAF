@@ -200,26 +200,36 @@ pheatmap(correlation_matrix,
 
 
 
-## v3 all + * for signif
+## v3 all + * for signif-----------
 
 # Adjust the masked correlation matrix to show * for significant values, excluding the diagonal
 display_matrix <- ifelse(!is.na(masked_correlation_matrix), "•", "")
 diag(display_matrix) <- ""  # Remove asterisk or value for the diagonal (self-correlations)
 
-# Plot the heatmap with the modified display matrix
-pheatmap(correlation_matrix,
-         display_numbers = display_matrix,  # Show only * for significant correlations
-         clustering_distance_rows = "euclidean",
-         clustering_distance_cols = "euclidean",
-         clustering_method = "complete",
-         color = color_palette,
-         breaks = seq(-1, 1, length.out = 51),  # Ensures that 0 is centered in the color scale
-         main = "Clustered Correlation Matrix (Significant Correlations Only)",
-         fontsize_row = 6,
-         fontsize_col = 6)
+# Plotting the square correlation matrix
+p <- pheatmap(correlation_matrix,
+              display_numbers = display_matrix,  # Show only * for significant correlations
+              clustering_distance_rows = "euclidean",
+              clustering_distance_cols = "euclidean",
+              clustering_method = "complete",
+              color = color_palette,
+              breaks = seq(-1, 1, length.out = 51),  # Ensures that 0 is centered in the color scale
+              main = "Clustered Correlation Matrix (Significant Correlations Only)",
+              fontsize_row = 6,
+              fontsize_col = 6)
+
+# Use grid to enforce the aspect ratio to 1:1
+grid.newpage()
+pushViewport(viewport(width = unit(1, "snpc"), height = unit(1, "snpc"))) # square normalized device coordinates
+print(p, newpage = FALSE)
+popViewport()
+
 
 
 ## V4 just 1 half of corrmatrix + * -----------
+# this is handled by corrplot which is cool, 
+# + it but problem is
+
 
 library(corrplot)
 
@@ -227,24 +237,23 @@ library(corrplot)
 alpha <- 0.01
 
 # Plot with hierarchical clustering, showing all correlations but only marking significant ones with an asterisk
+
 corrplot(correlation_matrix, 
          method = "color", 
-         type = "lower",                # Display only the upper triangle
-         order = "hclust",              # Perform hierarchical clustering
-         hclust.method = "complete",    # Specify the clustering method
-         p.mat = p_matrix,              # Pass in the p-value matrix
-         sig.level = alpha,             # Set significance level
-         insig = "label_sig",           # Mark significant correlations with an asterisk
-         pch = "*",                     # Use asterisk symbol
-         pch.cex = 1.2,                 # Adjust size of asterisk
-         pch.col = "black",             # Asterisk color
-         addCoef.col = NULL,            # Remove correlation coefficient text
+         type = "upper",                   # Display only the upper triangle
+         order = "hclust",                 # Perform hierarchical clustering
+         hclust.method = "complete",       # Specify the clustering method
+         p.mat = p_matrix,                 # Pass in the p-value matrix
+         sig.level = alpha,                # Set significance level
+         insig = "label_sig",              # Show asterisks for significant correlations only
+         pch = "*",                        # Use asterisk symbol
+         pch.cex = 1.2,                    # Adjust size of asterisk
+         pch.col = "black",                # Asterisk color
+         addCoef.col = NULL,               # Remove correlation coefficient text
          col = colorRampPalette(c("blue", "white", "red"))(200),  # Color scale centered at 0
-         tl.col = "black",              # Text label color
-         tl.srt = 45)                   # Rotate text labels for readability
-
-
-
+         tl.col = "black",                 # Text label color
+         tl.srt = 45,                      # Rotate text labels for readability
+         tl.cex = 0.63)                    # Set text size for labels (approximately 6.3)
 
 
 
