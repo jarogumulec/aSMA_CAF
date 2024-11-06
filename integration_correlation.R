@@ -119,6 +119,7 @@ print(correlation_matrix)
 # correl matrix --------
 
 
+## V1 all data shown even insignif-------------
 
 
 # Create a correlation matrix of numeric columns
@@ -143,18 +144,82 @@ pheatmap(correlation_matrix,
 
 
 
-# corr matrix signif only spravny clustering -------
+## v2 show R in signif, spravny clustering -------
 
-#todo
+# Modified cor_pvalues function to handle columns with many NAs
+# Adjusted function to handle NA values more robustly
+cor_pvalues <- function(mat) {
+  n <- ncol(mat)
+  p_matrix <- matrix(NA, n, n)
+  colnames(p_matrix) <- colnames(mat)
+  rownames(p_matrix) <- colnames(mat)
+  
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      # Extract columns and filter out NA values
+      x <- mat[[i]]
+      y <- mat[[j]]
+      valid_idx <- complete.cases(x, y)
+      
+      # Use only complete cases for x and y
+      x <- x[valid_idx]
+      y <- y[valid_idx]
+      
+      # Check if there are enough observations to perform the test
+      if (length(x) > 2) {  # Minimum of 3 data points for a correlation test
+        test <- cor.test(x, y)
+        p_matrix[i, j] <- test$p.value
+        p_matrix[j, i] <- test$p.value
+      }
+    }
+  }
+  return(p_matrix)
+}
+
+# Calculate the p-values matrix
+p_matrix <- cor_pvalues(numeric_data)
+
+# Mask non-significant correlations in the correlation matrix
+alpha <- 0.05
+masked_correlation_matrix <- correlation_matrix
+masked_correlation_matrix[p_matrix > alpha] <- NA  # Mask non-significant correlations
+
+# Plot the heatmap with masked non-significant correlations
+pheatmap(correlation_matrix,
+         display_numbers = ifelse(!is.na(masked_correlation_matrix), round(masked_correlation_matrix, 2), ""),  # Display significant values only
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         color = color_palette,
+         breaks = seq(-1, 1, length.out = 51),  # Ensures that 0 is centered in the color scale
+         main = "Clustered Correlation Matrix (Significant Correlations Only)",
+         fontsize_row = 6,
+         fontsize_col = 6)
+
+
+
+## v3 all + * for signif
+
+# Adjust the masked correlation matrix to show * for significant values, excluding the diagonal
+display_matrix <- ifelse(!is.na(masked_correlation_matrix), "•", "")
+diag(display_matrix) <- ""  # Remove asterisk or value for the diagonal (self-correlations)
+
+# Plot the heatmap with the modified display matrix
+pheatmap(correlation_matrix,
+         display_numbers = display_matrix,  # Show only * for significant correlations
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete",
+         color = color_palette,
+         breaks = seq(-1, 1, length.out = 51),  # Ensures that 0 is centered in the color scale
+         main = "Clustered Correlation Matrix (Significant Correlations Only)",
+         fontsize_row = 6,
+         fontsize_col = 6)
 
 
 
 
-
-
-
-
-# correl matrix signif only -------------
+## v4 signif only wrng clustering  -------------
 # blby ze clustruje jinak ale je to prehledny 
 # nesignifikantni to totiz udela jako r=0, coz ovlivni clustering
 
