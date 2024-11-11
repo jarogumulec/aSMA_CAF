@@ -174,7 +174,7 @@ table(clindata.subset$pN)
 clindata.subset <- clindata.subset %>%
   mutate(pN.simple = case_when(
     pN %in% c("0") ~ "0",
-    pN %in% c("1", "2", "3b") ~ "1-3",
+    pN %in% c("1", "2", "2a", "2b", "3b") ~ "1+",
     TRUE ~ NA_character_
   ))
 
