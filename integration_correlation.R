@@ -102,6 +102,7 @@ tables_to_merge <- list(AFM_avg, cytokine_avg, seahorse_avg, western_avg)
 # Merge all tables by the 'patient' column using full join
 merged_data <- reduce(tables_to_merge, full_join, by = "patient")
 
+write.csv(merged_data, "merged_data_for_correlation.csv", row.names = FALSE)
 
 
 
