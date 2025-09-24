@@ -56,7 +56,8 @@ colnames(seahorse_avg) <- c("patient", "basal OCR", "leak OCR", "post-OM ECAR", 
 colnames(seahorse_avg) 
 
 ## western ----------
-western <- read.csv("densitometry_HGFBnormalised.csv")
+# western <- read.csv("densitometry_HGFBnormalised.csv") # was an old nonnormalised
+western <- read.csv("densitometry_HGFBnormalised_housekeepnormalised_25-09.csv")
 # only needed ones
 western <- western[, c("patient", "PDPN.normalised.int.raw.vals", "ASMA.normalised.int.raw.vals")]
 # average
