@@ -271,6 +271,18 @@ write.csv(test_results_PDPN, "../densitometry_pdpn_test_results_housekeepnormali
 
 
 
+# correlation of those replicate-wise  -----
+
+ggplot(densitometry_HGFBnormalised, aes(x=ASMA.normalised.int.raw.vals, y=PDPN.normalised.int.raw.vals)) +
+  geom_point(
+    position = position_jitter(seed = 1, width = 0, height = 0),
+    size = 1, aes(colour = patient)) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+ggsave("WB_correl.svg", plot = last_plot(),
+       width = 9, height = 3.5, units = "cm", dpi = 300, scale = 1, limitsize = TRUE)
 
 
 
