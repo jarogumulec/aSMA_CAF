@@ -8,6 +8,8 @@ library(readxl)
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
+library(stringr)
+
 
 
 # data load --------------
@@ -45,7 +47,8 @@ densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx")
 # removes empty cases
 densitometry_HGFBnormalised <- densitometry_HGFBnormalised[densitometry_HGFBnormalised$id != "" & !is.na(densitometry_HGFBnormalised$id), ]
 #removes unrelevant columns
-densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 22:24)]
+#densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 22:24)] # pre 9/2025
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 33:35)]
 
 
 colnames(densitometry_HGFBnormalised) <- c("id", "run", "replicate", "patient", 
