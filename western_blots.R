@@ -38,25 +38,62 @@ setwd("C:/Users/Jaro-work/OneDrive - MUNI/Experimenty/24-01-23 - Honza aSMA CAF/
 # aSMA_PDPN.densitometry_241007_Klara <- aSMA_PDPN.densitometry_241007_Klara[c(1:6, 11:16, 21:26),c(1:4, 19:20)]
 
 
-## approach 2: to HGFB of every membrane -----------
+## approach 2: to HGFB of every membrane - non-normalised to housekeep -----------
+
+
+# # downside: The HGFB will be 1.0 without variability at all. statistic needed would be One sample test
+# 
+# densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx") 
+# 
+# # removes empty cases
+# densitometry_HGFBnormalised <- densitometry_HGFBnormalised[densitometry_HGFBnormalised$id != "" & !is.na(densitometry_HGFBnormalised$id), ]
+# #removes unrelevant columns
+# #densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 22:24)] # pre 9/2025
+# densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 33:35)]
+# 
+# 
+# colnames(densitometry_HGFBnormalised) <- c("id", "run", "replicate", "patient", 
+#                         "PDPN.normalised.int.raw.vals", 
+#                         "ASMA.normalised.int.raw.vals", 
+#                         "TUB.normalised.int.raw.vals")
+# 
+# colnames(densitometry_HGFBnormalised)
+
+
+## approach 3: to HGFB of every membrane - normalised to housekeep (actb+tub avg) 25-09-24 -----------
+
 
 # downside: The HGFB will be 1.0 without variability at all. statistic needed would be One sample test
+# but now allready with normalisation to housekeep
 
-densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx")
+densitometry_HGFBnormalised <- read_excel("densitometry_vse_dohromady.xlsx", 
+                                         sheet = "dodelane_25-09-18")
+
+
 
 # removes empty cases
 densitometry_HGFBnormalised <- densitometry_HGFBnormalised[densitometry_HGFBnormalised$id != "" & !is.na(densitometry_HGFBnormalised$id), ]
 #removes unrelevant columns
-#densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 22:24)] # pre 9/2025
-densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 33:35)]
+densitometry_HGFBnormalised <- densitometry_HGFBnormalised[,c(1:3, 5, 40:41)]
 
 
 colnames(densitometry_HGFBnormalised) <- c("id", "run", "replicate", "patient", 
-                        "PDPN.normalised.int.raw.vals", 
-                        "ASMA.normalised.int.raw.vals", 
-                        "TUB.normalised.int.raw.vals")
+                                           "ASMA.normalised.int.raw.vals",
+                                           "PDPN.normalised.int.raw.vals")
 
 colnames(densitometry_HGFBnormalised)
+
+
+
+
+
+
+
+
+
+
+
+
 
 # rename patients for consistency
 densitometry_HGFBnormalised <- densitometry_HGFBnormalised %>%
@@ -73,7 +110,7 @@ densitometry_HGFBnormalised <- densitometry_HGFBnormalised %>%
     )
   )
 
-write.csv(densitometry_HGFBnormalised, "../densitometry_HGFBnormalised.csv", row.names = FALSE)
+write.csv(densitometry_HGFBnormalised, "../densitometry_HGFBnormalised_housekeepnormalised_25-09.csv", row.names = FALSE)
 #
 
 
@@ -111,6 +148,15 @@ y_max <- max(densitometry_HGFBnormalised$ASMA.normalised.int.raw.vals, na.rm = T
 
 
 
+p_value_data <- p_value_data %>%
+  mutate(sig_label = case_when(
+    p.val < 0.0001 ~ "****",
+    p.val < 0.001  ~ "***",
+    p.val < 0.01   ~ "**",
+    p.val < 0.05   ~ "*",
+    TRUE           ~ ""
+  ))
+
 # 
 # Step 7: Create the plot
 ggplot(densitometry_HGFBnormalised, aes(x = patient, y = ASMA.normalised.int.raw.vals)) +
@@ -120,17 +166,20 @@ ggplot(densitometry_HGFBnormalised, aes(x = patient, y = ASMA.normalised.int.raw
   theme(
     axis.text.x = element_text(color = "black", size = 6.3, angle = 90, vjust = 0.5, hjust = 1),
     axis.text.y = element_text(color = "black", size = 6.3),
-    axis.title = element_text(size = 8)
+    axis.title  = element_text(size = 8)
   ) +
   xlab(NULL) +
   ylab("aSMA (A.U.)") +
   theme(legend.position = "none") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_y_log10() +
-  # Step 8: Manually annotate with the unadjusted p-values (one per patient)
-  geom_text(data = p_value_data, aes(x = patient, y = y_max, 
-                                     label = ifelse(p.val < 0.05, sprintf("p = %.3f", p.val), "")),
-            vjust = -1, size = 2)
+  geom_text(
+    data = p_value_data,
+    aes(x = patient, y = y_max, label = sig_label),
+    vjust = -1,
+    size = 2
+  )
+
 
 
 ggsave("asma.svg", plot = last_plot(),
@@ -139,7 +188,7 @@ ggsave("asma.svg", plot = last_plot(),
 
 # Optional: Check the p-value table
 print(test_results)
-
+write.csv(test_results, "../densitometry_asma_test_results_housekeepnormalised.csv", row.names = FALSE)
 
 
 # pplot PDPN -----
@@ -155,6 +204,7 @@ test_results_PDPN <- densitometry_HGFBnormalised %>%
 test_results_PDPN <- test_results_PDPN %>%
   mutate(p.adj = p.adjust(p.val, method = "BH"))
 
+
 # Step 3: Merge the p-values with the original data for plotting
 densitometry_HGFBnormalised_PDPN <- densitometry_HGFBnormalised %>%
   left_join(test_results_PDPN, by = "patient")
@@ -168,8 +218,22 @@ p_value_data_PDPN <- test_results_PDPN %>%
   filter(!is.na(p.val)) %>%
   distinct(patient, p.val)
 
+p_value_data_PDPN <- p_value_data_PDPN %>%
+  mutate(sig_label = case_when(
+    p.val < 0.0001 ~ "****",
+    p.val < 0.001  ~ "***",
+    p.val < 0.01   ~ "**",
+    p.val < 0.05   ~ "*",
+    TRUE           ~ ""
+  ))
+
+
+
 # Step 6: Define a y-limit for the text to be placed slightly above the maximum values in each group
 y_max_PDPN <- max(densitometry_HGFBnormalised_PDPN$PDPN.normalised.int.raw.vals, na.rm = TRUE) * 1.1
+
+
+
 
 # Step 7: Create the plot for PDPN
 ggplot(densitometry_HGFBnormalised_PDPN, aes(x = patient, y = PDPN.normalised.int.raw.vals)) +
@@ -187,9 +251,12 @@ ggplot(densitometry_HGFBnormalised_PDPN, aes(x = patient, y = PDPN.normalised.in
   scale_y_continuous(limits = c(0, NA)) +
   scale_y_log10() +
   # Step 8: Manually annotate with the unadjusted p-values (one per patient)
-  geom_text(data = p_value_data_PDPN, aes(x = patient, y = y_max_PDPN, 
-                                          label = ifelse(p.val < 0.05, sprintf("p = %.3f", p.val), "")),
-            vjust = -1, size = 2)
+  geom_text(
+    data = p_value_data_PDPN,
+    aes(x = patient, y = y_max_PDPN, label = sig_label),
+    vjust = -1,
+    size = 2
+  )
 
 # Save the plot as SVG
 ggsave("pdpn.svg", plot = last_plot(),
@@ -197,6 +264,10 @@ ggsave("pdpn.svg", plot = last_plot(),
 
 # Optional: Check the p-value table
 print(test_results_PDPN)
+write.csv(test_results_PDPN, "../densitometry_pdpn_test_results_housekeepnormalised.csv", row.names = FALSE)
+
+
+
 
 
 
