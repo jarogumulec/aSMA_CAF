@@ -179,9 +179,14 @@ clindata.subset <- clindata.subset %>%
 
 
 #age
-median(clindata.subset.selected$age.at.dg)
-quantile(clindata.subset.selected$age.at.dg, 0.25, na.rm = TRUE)
-quantile(clindata.subset.selected$age.at.dg, 0.75, na.rm = TRUE)
+
+#median(clindata.subset.selected$age.at.dg)
+#quantile(clindata.subset.selected$age.at.dg, 0.25, na.rm = TRUE)
+#quantile(clindata.subset.selected$age.at.dg, 0.75, na.rm = TRUE)
+
+median(clindata.subset$age.at.dg)
+quantile(clindata.subset$age.at.dg, 0.25, na.rm = TRUE)
+quantile(clindata.subset$age.at.dg, 0.75, na.rm = TRUE)
 
 
 
@@ -234,6 +239,8 @@ clindata.subset.selected <- clindata.subset %>%
   select(all_of(selected_columns))
 
 write.csv(clindata.subset.selected, "clindata.csv", row.names = FALSE)
+
+#MAY START HERE - LOADING CORRECTED -------------
 
 # selecting complete columns (not therapy chemo which has some NAs and will not be used in correlations)
 selected_columns <- c("patient", "age.at.dg", "gender", "location", "pM", "G", 
