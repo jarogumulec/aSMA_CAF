@@ -109,23 +109,21 @@ hist(log10(merged_data$ASMA))
 
 # cut poins identificaiton
 
-# vector of values
-vals <- log10(merged_data$ASMA)
 
 # calculate tertile cut points
-cut_points <- quantile(vals, probs = c(1/3, 2/3), na.rm = TRUE)
+cut_points <- quantile(log10(merged_data$ASMA), probs = c(1/3, 2/3), na.rm = TRUE)
 cut_points
 
 # create groups
 merged_data$ASMA_3group <- cut(
-  vals,
+  log10(merged_data$ASMA),
   breaks = c(-Inf, cut_points[1], cut_points[2], Inf),
   labels = c("low", "med", "high")
 )
 
 
 # and just 2group thing
-merged_data$ASMA_2group <- ifelse(vals > 1, "hi", "lo")
+merged_data$ASMA_2group <- ifelse(merged_data$ASMA > 1, "hi", "lo")
 
 
 
