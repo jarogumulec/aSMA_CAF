@@ -103,6 +103,32 @@ tables_to_merge <- list(AFM_avg, cytokine_avg, seahorse_avg, western_avg)
 # Merge all tables by the 'patient' column using full join
 merged_data <- reduce(tables_to_merge, full_join, by = "patient")
 
+# dichotzonsiation of ASMA 
+hist(log10(merged_data$ASMA))
+
+
+# cut poins identificaiton
+
+# vector of values
+vals <- log10(merged_data$ASMA)
+
+# calculate tertile cut points
+cut_points <- quantile(vals, probs = c(1/3, 2/3), na.rm = TRUE)
+cut_points
+
+# create groups
+merged_data$ASMA_3group <- cut(
+  vals,
+  breaks = c(-Inf, cut_points[1], cut_points[2], Inf),
+  labels = c("low", "med", "high")
+)
+
+
+# and just 2group thing
+merged_data$ASMA_2group <- ifelse(vals > 1, "hi", "lo")
+
+
+
 write.csv(merged_data, "merged_data_for_correlation.csv", row.names = FALSE)
 
 

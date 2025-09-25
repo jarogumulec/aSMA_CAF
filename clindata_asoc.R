@@ -253,11 +253,16 @@ rm(checktable, selected_columns)
 # 3 Analysis w measured data -  categorical factors  ----------
 
 # Assuming merged_data and clindata_subset_selected are your two tables
+
 merged_clin_data <- merge(merged_data, clindata.subset.selected, by = "patient")
+
+
 
 rm(clindata.subset, merged_data, clindata.subset.selected)
 write.csv(merged_clin_data, "merged_clindata_complete.csv", row.names = FALSE)
 
+
+# MAY START JUST HERE - LOADING PROCESSED -------
 merged_clin_data <- read.csv("merged_clindata_complete.csv")
 
 ## 3.1 counting sigificances -----
@@ -271,6 +276,20 @@ numeric_vars <- c("Young.modulus", "GCSF", "GM.CSF", "GRO.a", "GRO.a.b.y.", "IFN
 categorical_vars <- c("location", "p16", "smoker", "pT.simple", "pN.simple", "Stage.simple")
 
 #"gender", "pM", "G"
+
+# alternativelly, for ASMA Status only
+
+numeric_vars <- c("Young.modulus", "GCSF", "GM.CSF", "GRO.a", "GRO.a.b.y.", "IFN.y", "IL.10", "IL.13", "IL.15", 
+                  "IL.1a", "IL.2", "IL.3", "IL.5", "IL.6", "IL.7", "IL.8", "MCP.1", "MCP.2", "MCP.3", "MIG", 
+                  "RANTES", "TGF.b1", "TNF.a", "TNF.b", "basal.OCR", "leak.OCR", "post.OM.ECAR", "basal.ECAR", 
+                  "OCR.to.ECAR", "ATP.linked..OCR", "PDPN")
+
+categorical_vars <- c("location", "p16", "smoker", "pT.simple", "pN.simple", "Stage.simple", "ASMA_2group")
+
+# excl missing 167 for ASMA Status - just for this 
+merged_clin_data <- merged_clin_data %>%
+  filter(patient != "CAF 167")
+
 
 
 
@@ -376,7 +395,8 @@ comparison_labels <- c(
   "smoker" = "smoker (1 vs 0)",
   "pT.simple" = "pT.simple (3-4 vs 1-2)",
   "pN.simple" = "pN.simple (1+ vs 0)",
-  "Stage.simple" = "Stage.simple (III-IV vs I-II)"
+  "Stage.simple" = "Stage.simple (III-IV vs I-II)",
+  "ASMA_2group" = "ASMA status"
 )
 
 # Plot with custom facet labels
